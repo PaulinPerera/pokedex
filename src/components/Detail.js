@@ -9,7 +9,7 @@ import { ivTotal } from '../services/collection';
 import { CONFIG } from '../config';
 import { GEN_ROMAN, RARITY_LABEL, STAT_KEYS, STAT_LABELS, TYPE_COLORS } from '../data/meta';
 import {
-  Button, Card, FadeIn, IconButton, PokeImage, SectionTitle, StatBar, StatsBlock, Tap, TypePill, Field,
+  Button, Card, FadeIn, IconButton, PokeImage, SectionTitle, StatBar, StatsBlock, TypePill, Field, ThemeToggle,
 } from './Ui';
 
 export function Sheet({ visible, onClose, title, children }) {
@@ -21,7 +21,7 @@ export function Sheet({ visible, onClose, title, children }) {
         <View style={styles.sheetHeader}>
           <IconButton name="chevron-down" label="Fechar" onPress={onClose} color={colors.primary} size={28} />
           <Text style={[styles.sheetTitle, { color: colors.text }]} numberOfLines={1}>{title}</Text>
-          <View style={{ width: 44 }} />
+          <ThemeToggle color={colors.primary} />
         </View>
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }} keyboardShouldPersistTaps="handled">
           {children}

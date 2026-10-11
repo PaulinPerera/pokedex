@@ -3,13 +3,13 @@ import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } fr
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { Button, Card, Field, FadeIn, Pokeball, AvatarPicker, SectionTitle } from '../components/Ui';
+import { Button, Card, Field, FadeIn, Pokeball, AvatarPicker, SectionTitle, PokedexLights, ThemeToggle } from '../components/Ui';
 
 export default function AuthScreen() {
   const { colors, login, register } = useApp();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('login');
-  const [f, setF] = useState({ username: '', email: '', password: '', confirm: '', avatar: 'red' });
+  const [f, setF] = useState({ username: '', email: '', password: '', confirm: '', avatar: 'red', photo: null });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
 
@@ -31,6 +31,10 @@ export default function AuthScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient colors={[colors.primary, colors.primaryDark, colors.bg]} locations={[0, 0.35, 0.35]} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24, paddingHorizontal: 18 }} keyboardShouldPersistTaps="handled">
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <PokedexLights />
+            <ThemeToggle />
+          </View>
           <FadeIn style={{ alignItems: 'center', marginBottom: 18 }}>
             <Pokeball size={84} animated />
             <Text style={styles.title}>POKÉDEX</Text>
@@ -47,8 +51,7 @@ export default function AuthScreen() {
               {mode === 'register' ? (
                 <>
                   <Field label="Confirmar senha" value={f.confirm} onChangeText={set('confirm')} error={errors.confirm} secure autoCapitalize="none" />
-                  <SectionTitle>Escolha seu avatar</SectionTitle>
-                  <AvatarPicker value={f.avatar} onChange={set('avatar')} />
+                  <AvatarPicker avatar={f.avatar} photo={f.photo} onChange={(avatar, photo) => setF((p) => ({ ...p, avatar, photo }))} />
                   <View style={{ height: 12 }} />
                 </>
               ) : null}

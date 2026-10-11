@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { NavContext } from '../navigation';
-import { Avatar, IconButton, Tap } from './Ui';
+import { Avatar, IconButton, Tap, PokedexLights, ThemeToggle } from './Ui';
 import HomeScreen from '../screens/HomeScreen';
 import RandomizeScreen from '../screens/RandomizeScreen';
 import AltDexScreen from '../screens/AltDexScreen';
@@ -92,11 +92,9 @@ export default function Shell() {
           ) : (
             <IconButton name="menu" label="Abrir menu" onPress={() => setMenuOpen(true)} color="#FFF" />
           )}
+          <View style={{ marginLeft: 2 }}><PokedexLights size={28} /></View>
           <Text style={styles.headerTitle} numberOfLines={1} accessibilityRole="header">{title}</Text>
-          <View style={styles.countBadge} accessibilityLabel={`${pc.length} Pokémon no PC`}>
-            <Ionicons name="albums" size={14} color="#FFF" />
-            <Text style={styles.countText}>{pc.length}</Text>
-          </View>
+          <ThemeToggle />
         </LinearGradient>
 
         <Animated.View
@@ -134,7 +132,7 @@ export default function Shell() {
             }]}
           >
             <View style={styles.drawerProfile}>
-              <Avatar id={profile.avatar} size={52} />
+              <Avatar id={profile.avatar} photo={profile.photo} size={52} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontWeight: '900', fontSize: 16 }} numberOfLines={1}>{profile.username}</Text>
                 <Text style={{ color: colors.muted, fontSize: 12 }}>{pc.length} Pokémon no PC</Text>
@@ -155,8 +153,9 @@ export default function Shell() {
 }
 
 const styles = StyleSheet.create({
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 8, elevation: 6 },
-  headerTitle: { flex: 1, color: '#FFF', fontSize: 19, fontWeight: '900', letterSpacing: 0.5, marginLeft: 4 },
+  headerTitle: { flex: 1, color: '#FFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.5, marginLeft: 10 },
   countBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#00000033', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4, marginRight: 6 },
   countText: { color: '#FFF', fontWeight: '800', fontSize: 13 },
   tabs: { flexDirection: 'row', borderTopWidth: 1, paddingTop: 6 },

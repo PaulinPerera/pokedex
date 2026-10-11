@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, Image, TextInput, Pressable, Animated, Easing, ActivityIndicator, StyleSheet,
+  View, Text, Image, TextInput, Pressable, Animated, Easing, ActivityIndicator, StyleSheet, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { AVATARS, STAT_LABELS, STAT_KEYS, TYPE_COLORS, TYPE_NAMES } from '../data/meta';
 import { spriteCandidates } from '../services/pokeApi';
+import { takePhoto, pickPhoto } from '../services/photo';
 
 // ---------- Animações utilitárias ----------
 export function useLoop(enabled, duration = 1600) {
@@ -189,28 +190,64 @@ export function TypePill({ type, small }) {
   );
 }
 
+const POKEBALL_IMG = require('../../assets/pokeball.png');
+
+// Poké Bola em pixel art (usada em todas as telas).
 export function Pokeball({ size = 96, animated = false, style }) {
   const { settings } = useApp();
   const v = useLoop(animated && settings.animations, 900);
   const rotate = v.interpolate({ inputRange: [0, 1], outputRange: ['-12deg', '12deg'] });
   const lift = v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -8, 0] });
-  const bw = Math.max(2, size * 0.05);
+  return (
+    <Animated.Image
+      source={POKEBALL_IMG} resizeMode="contain" accessibilityIgnoresInvertColors
+      style={[{ width: size, height: size, transform: [{ translateY: lift }, { rotate }] }, style]}
+    />
+  );
+}
+
+function Led({ color, border, duration }) {
+  const { settings } = useApp();
+  const v = useLoop(settings.animations, duration);
   return (
     <Animated.View
-      style={[{
-        width: size, height: size, borderRadius: size / 2, overflow: 'hidden', borderWidth: bw, borderColor: '#1A1A1A',
-        backgroundColor: '#F5F5F5', transform: [{ translateY: lift }, { rotate }],
-      }, style]}
-    >
-      <View style={{ height: '50%', backgroundColor: '#E3350D' }} />
-      <View style={{ position: 'absolute', top: '50%', marginTop: -size * 0.04, left: 0, right: 0, height: size * 0.08, backgroundColor: '#1A1A1A' }} />
-      <View
-        style={{
-          position: 'absolute', top: '50%', left: '50%', width: size * 0.3, height: size * 0.3, borderRadius: size * 0.15,
-          marginLeft: -size * 0.15, marginTop: -size * 0.15, backgroundColor: '#FFF', borderWidth: bw, borderColor: '#1A1A1A',
-        }}
-      />
-    </Animated.View>
+      style={{
+        width: 9, height: 9, borderRadius: 5, backgroundColor: color, borderWidth: 1.5, borderColor: border,
+        opacity: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }),
+      }}
+    />
+  );
+}
+
+// Lente azul + LEDs piscando, como na Pokédex.
+export function PokedexLights({ size = 30 }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+      <LinearGradient
+        colors={['#AADDFF', '#2299FF', '#0044BB']}
+        style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 2.5, borderColor: '#FFFFFF', overflow: 'hidden' }}
+      >
+        <View style={{ position: 'absolute', top: size * 0.15, left: size * 0.2, width: size * 0.3, height: size * 0.18, borderRadius: size * 0.09, backgroundColor: 'rgba(255,255,255,0.75)', transform: [{ rotate: '-30deg' }] }} />
+      </LinearGradient>
+      <View style={{ flexDirection: 'row', gap: 4 }}>
+        <Led color="#FF5252" border="#7A0000" duration={700} />
+        <Led color="#FFD600" border="#8A6D00" duration={900} />
+        <Led color="#4CAF50" border="#1B5E20" duration={1100} />
+      </View>
+    </View>
+  );
+}
+
+// Botão de alternar tema claro/escuro (usado no topo de todas as telas).
+export function ThemeToggle({ color = '#FFFFFF' }) {
+  const { settings, updateSettings } = useApp();
+  const dark = settings.theme === 'dark';
+  return (
+    <IconButton
+      name={dark ? 'sunny' : 'moon'} color={color}
+      label={dark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'}
+      onPress={() => updateSettings({ theme: dark ? 'light' : 'dark' })}
+    />
   );
 }
 
@@ -274,28 +311,92 @@ export function StatsBlock({ stats, max = 180, showTotal }) {
   );
 }
 
-export function Avatar({ id, size = 56 }) {
-  const av = AVATARS.find((a) => a.id === id) || AVATARS[0];
+export function Avatar({ id, photo, size = 56 }) {
+  const av = AVATARS.find((a) => a.id === id);
+  const box = {
+    width: size, height: size, borderRadius: size / 2, borderWidth: 3, borderColor: '#FFFFFF', overflow: 'hidden',
+    backgroundColor: av ? `${av.color}55` : '#888', alignItems: 'center', justifyContent: 'center',
+  };
+  if (photo) return <View style={box}><Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} /></View>;
+  if (av) return <View style={box}><Image source={av.bust} style={{ width: '100%', height: '100%' }} resizeMode="cover" /></View>;
+  return <View style={box}><Ionicons name="person" size={size * 0.55} color="#FFFFFF" /></View>;
+}
+
+function PickerBtn({ icon, label, onPress, disabled, danger, fill }) {
+  const { colors } = useApp();
+  const c = danger ? colors.danger : colors.primary;
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: av.color, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#FFF' }}>
-      <Ionicons name="person" size={size * 0.55} color="#FFF" />
+    <Tap onPress={onPress} disabled={disabled} label={label} containerStyle={fill ? { flex: 1 } : undefined}
+      style={[pickerStyles.btn, { borderColor: c, backgroundColor: colors.surface }]}>
+      <Ionicons name={icon} size={16} color={c} />
+      <Text numberOfLines={1} style={{ color: c, fontWeight: '800', fontSize: 12 }}>{label}</Text>
+    </Tap>
+  );
+}
+
+// Foto (câmera/galeria) e protagonista são escolhas independentes. onChange(avatar, photo)
+export function AvatarPicker({ avatar, photo, onChange }) {
+  const { colors } = useApp();
+  const [busy, setBusy] = useState(false);
+
+  const getPhoto = async (fn) => {
+    setBusy(true);
+    try {
+      const uri = await fn();
+      if (uri) onChange(avatar, uri);
+    } catch (e) {
+      Alert.alert('Não foi possível usar a foto', e.message || 'Tente novamente.');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <View>
+      <Text style={[pickerStyles.label, { color: colors.muted }]}>SUA FOTO (OPCIONAL)</Text>
+      <View style={pickerStyles.photoRow}>
+        <View style={{ flexShrink: 0 }}>
+          <Avatar id={avatar} photo={photo} size={76} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <PickerBtn fill icon="camera" label="Tirar foto" onPress={() => getPhoto(takePhoto)} disabled={busy} />
+            <PickerBtn fill icon="images" label="Galeria" onPress={() => getPhoto(pickPhoto)} disabled={busy} />
+          </View>
+          {photo ? (
+            <View style={{ marginTop: 8 }}>
+              <PickerBtn icon="trash" label="Remover foto" danger onPress={() => onChange(avatar, null)} />
+            </View>
+          ) : null}
+        </View>
+      </View>
+
+      <Text style={[pickerStyles.label, { color: colors.muted, marginTop: 18 }]}>ESCOLHA SEU PROTAGONISTA</Text>
+      <View style={pickerStyles.grid}>
+        {AVATARS.map((a) => {
+          const sel = avatar === a.id;
+          return (
+            <Tap key={a.id} onPress={() => onChange(a.id, photo)} label={`Protagonista ${a.name}`} containerStyle={{ width: '31%' }}
+              style={[pickerStyles.tile, { backgroundColor: colors.surfaceAlt, borderColor: sel ? colors.primary : colors.border }]}>
+              <View style={{ height: 110, width: '100%' }}>
+                <Image source={a.full} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+              </View>
+              <Text numberOfLines={1} style={{ color: sel ? colors.primary : colors.text, fontWeight: '800', fontSize: 12, marginTop: 6 }}>{a.name}</Text>
+              {sel ? <View style={[pickerStyles.check, { backgroundColor: colors.primary }]}><Ionicons name="checkmark" size={12} color="#FFF" /></View> : null}
+            </Tap>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-export function AvatarPicker({ value, onChange }) {
-  const { colors } = useApp();
-  return (
-    <View style={styles.avatarGrid}>
-      {AVATARS.map((a) => (
-        <Tap key={a.id} onPress={() => onChange(a.id)} label={`Avatar ${a.name}`} style={[styles.avatarItem, value === a.id && { backgroundColor: colors.surfaceAlt, borderColor: colors.primary }]}>
-          <Avatar id={a.id} size={44} />
-          <Text style={{ color: colors.text, fontSize: 11, marginTop: 4, fontWeight: value === a.id ? '800' : '500' }}>{a.name}</Text>
-        </Tap>
-      ))}
-    </View>
-  );
-}
+const pickerStyles = StyleSheet.create({
+  label: { fontSize: 11, fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderRadius: 12, minHeight: 42, paddingHorizontal: 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tile: { alignItems: 'center', borderWidth: 2, borderRadius: 16, paddingTop: 8, paddingBottom: 8, paddingHorizontal: 6 },
+  check: { position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+});
 
 const styles = StyleSheet.create({
   btn: { minHeight: 48, borderRadius: 14, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' },

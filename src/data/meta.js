@@ -31,16 +31,10 @@ export const STAT_LABELS = {
   hp: 'HP', atk: 'Ataque', def: 'Defesa', spa: 'Atq. Esp.', spd: 'Def. Esp.', spe: 'Velocidade',
 };
 
-// Protagonistas dos jogos (representados por cor + ícone; veja README sobre artes oficiais).
+// Treinadores (imagens em assets/avatars: corpo inteiro "full" e recorte "bust").
 export const AVATARS = [
-  { id: 'red', name: 'Red', color: '#E53935' },
-  { id: 'leaf', name: 'Leaf', color: '#43A047' },
-  { id: 'ethan', name: 'Ethan', color: '#F9A825' },
-  { id: 'lyra', name: 'Lyra', color: '#8E24AA' },
-  { id: 'brendan', name: 'Brendan', color: '#00897B' },
-  { id: 'may', name: 'May', color: '#D81B60' },
-  { id: 'lucas', name: 'Lucas', color: '#1E88E5' },
-  { id: 'dawn', name: 'Dawn', color: '#5E35B1' },
+  { id: 'red', name: 'Red', color: '#E53935', full: require('../../assets/avatars/red.png'), bust: require('../../assets/avatars/red-bust.png') },
+  { id: 'leaf', name: 'Leaf', color: '#43A047', full: require('../../assets/avatars/leaf.png'), bust: require('../../assets/avatars/leaf-bust.png') },
 ];
 
 export function norm(text) {

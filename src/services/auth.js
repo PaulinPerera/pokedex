@@ -59,7 +59,7 @@ function validateNewPassword(password, confirm) {
   return errors;
 }
 
-export async function registerAccount({ username, email, password, confirm, avatar }) {
+  export async function registerAccount({ username, email, password, confirm, avatar, photo }) {
   const accounts = await loadAccounts();
   const errors = { ...validateIdentity({ username, email }, accounts, null), ...validateNewPassword(password, confirm) };
   if (Object.keys(errors).length) return { errors };
@@ -69,6 +69,7 @@ export async function registerAccount({ username, email, password, confirm, avat
     username: username.trim(),
     email: email.trim().toLowerCase(),
     avatar: avatar || 'red',
+    photo: photo || null,
     createdAt: new Date().toISOString(),
     salt,
     hash: await hashPassword(password, salt),
@@ -92,13 +93,13 @@ export async function loginAccount({ email, password }) {
   return { account };
 }
 
-export async function updateAccount(id, { username, email, avatar }) {
+  export async function updateAccount(id, { username, email, avatar, photo }) {
   const accounts = await loadAccounts();
   const errors = validateIdentity({ username, email }, accounts, id);
   if (Object.keys(errors).length) return { errors };
   const idx = accounts.findIndex((a) => a.id === id);
   if (idx < 0) return { errors: { form: 'Conta não encontrada.' } };
-  const updated = { ...accounts[idx], username: username.trim(), email: email.trim().toLowerCase(), avatar };
+    const updated = { ...accounts[idx], username: username.trim(), email: email.trim().toLowerCase(), avatar, photo: photo || null };
   const next = [...accounts];
   next[idx] = updated;
   await saveAccounts(next);

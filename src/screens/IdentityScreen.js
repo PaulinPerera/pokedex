@@ -7,7 +7,7 @@ import { Avatar, AvatarPicker, Button, Card, Field, FadeIn, SectionTitle } from 
 
 export default function IdentityScreen() {
   const { colors, profile, pc, game, updateProfile } = useApp();
-  const [f, setF] = useState({ username: profile.username, email: profile.email, avatar: profile.avatar });
+    const [f, setF] = useState({ username: profile.username, email: profile.email, avatar: profile.avatar, photo: profile.photo || null });
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ export default function IdentityScreen() {
           <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
             <Text style={styles.cardLabel}>CARTÃO DE TREINADOR</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 }}>
-              <Avatar id={profile.avatar} size={80} />
+              <Avatar id={profile.avatar} photo={profile.photo} size={80} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name} numberOfLines={1}>{profile.username}</Text>
                 <Text style={styles.mail} numberOfLines={1}>{profile.email}</Text>
@@ -54,8 +54,7 @@ export default function IdentityScreen() {
           <SectionTitle>Editar dados</SectionTitle>
           <Field label="Nome de usuário" value={f.username} onChangeText={set('username')} error={errors.username} maxLength={20} autoCapitalize="none" />
           <Field label="E-mail" value={f.email} onChangeText={set('email')} error={errors.email} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
-          <SectionTitle>Avatar</SectionTitle>
-          <AvatarPicker value={f.avatar} onChange={set('avatar')} />
+          <AvatarPicker avatar={f.avatar} photo={f.photo} onChange={(avatar, photo) => { setF((p) => ({ ...p, avatar, photo })); setSaved(false); }} />
           {errors.form ? <Text style={{ color: colors.danger, marginTop: 8 }}>{errors.form}</Text> : null}
           <View style={{ height: 14 }} />
           <Button title={saved ? 'Alterações salvas!' : 'Salvar alterações'} icon={saved ? 'checkmark-circle' : 'save'} onPress={save} loading={busy} />
