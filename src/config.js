@@ -17,5 +17,5 @@ export const CONFIG = {
   STORAGE_PREFIX: '@pokedex/',
 };
 
-// Iniciais disponíveis na escolha: 1ª e 2ª geração.
+// Iniciais disponíveis na escolha: 1ª e 2ª geração..
 export const STARTER_IDS = [1, 4, 7, 152, 155, 158];
