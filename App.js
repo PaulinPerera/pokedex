@@ -1,20 +1,41 @@
+import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppProvider, useApp } from './src/context/AppContext';
+import Shell from './src/components/Shell';
+import AuthScreen from './src/screens/AuthScreen';
+import { Pokeball } from './src/components/Ui';
 
-export default function App() {
+function Root() {
+  const { ready, profile, colors } = useApp();
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <Pokeball size={72} animated />
+        <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary} />
+      </View>
+    );
+  }
+  return profile ? <Shell /> : <AuthScreen />;
+}
+
+function Themed() {
+  const { colors } = useApp();
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <>
+      <StatusBar style="light" backgroundColor={colors.primary} />
+      <Root />
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppProvider>
+        <Themed />
+      </AppProvider>
+    </SafeAreaProvider>
+  );
+}
